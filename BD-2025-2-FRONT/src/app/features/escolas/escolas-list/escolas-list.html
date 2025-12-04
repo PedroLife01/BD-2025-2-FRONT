@@ -1,1 +1,130 @@
-<p>escolas-list works!</p>
+<app-page-header
+  title="Escolas"
+  subtitle="Gerencie as escolas cadastradas no sistema"
+  icon="business"
+  [showAddButton]="true"
+  addButtonLabel="Nova Escola"
+  (addClick)="openCreateDialog()"
+>
+</app-page-header>
+
+<mat-card class="table-card">
+  <!-- Search -->
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Buscar escolas</mat-label>
+      <input 
+        matInput 
+        [(ngModel)]="searchTerm" 
+        (keyup.enter)="onSearch()"
+        placeholder="Nome, CNPJ, email..."
+      >
+      <button mat-icon-button matSuffix (click)="onSearch()">
+        <mat-icon>search</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <app-loading message="Carregando escolas..."></app-loading>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && dataSource.data.length === 0) {
+    <app-empty-state
+      icon="business"
+      title="Nenhuma escola encontrada"
+      [message]="searchTerm ? 'Tente buscar com outros termos' : 'Comece adicionando a primeira escola'"
+      [actionLabel]="searchTerm ? '' : 'Nova Escola'"
+      (action)="openCreateDialog()"
+    ></app-empty-state>
+  }
+
+  <!-- Table -->
+  @if (!loading() && dataSource.data.length > 0) {
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort>
+        <!-- Nome Column -->
+        <ng-container matColumnDef="nome">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Nome</th>
+          <td mat-cell *matCellDef="let escola">
+            <div class="escola-name">
+              <mat-icon class="escola-icon">business</mat-icon>
+              <span>{{ escola.nome }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- CNPJ Column -->
+        <ng-container matColumnDef="cnpj">
+          <th mat-header-cell *matHeaderCellDef>CNPJ</th>
+          <td mat-cell *matCellDef="let escola">
+            <code>{{ formatCNPJ(escola.cnpj) }}</code>
+          </td>
+        </ng-container>
+
+        <!-- Email Column -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let escola">{{ escola.email || '-' }}</td>
+        </ng-container>
+
+        <!-- Telefone Column -->
+        <ng-container matColumnDef="telefone">
+          <th mat-header-cell *matHeaderCellDef>Telefone</th>
+          <td mat-cell *matCellDef="let escola">{{ escola.telefone || '-' }}</td>
+        </ng-container>
+
+        <!-- Região Column -->
+        <ng-container matColumnDef="regiaoAdministrativa">
+          <th mat-header-cell *matHeaderCellDef>Região</th>
+          <td mat-cell *matCellDef="let escola">
+            @if (escola.regiaoAdministrativa) {
+              <mat-chip-set>
+                <mat-chip>{{ escola.regiaoAdministrativa }}</mat-chip>
+              </mat-chip-set>
+            } @else {
+              -
+            }
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-header">Ações</th>
+          <td mat-cell *matCellDef="let escola" class="actions-cell">
+            <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Opções">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="openEditDialog(escola)">
+                <mat-icon>edit</mat-icon>
+                <span>Editar</span>
+              </button>
+              <button mat-menu-item (click)="confirmDelete(escola)" class="delete-action">
+                <mat-icon color="warn">delete</mat-icon>
+                <span>Excluir</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+
+    <!-- Paginator -->
+    @if (meta()) {
+      <mat-paginator
+        [length]="meta()!.total"
+        [pageSize]="meta()!.limit"
+        [pageIndex]="meta()!.page - 1"
+        [pageSizeOptions]="[5, 10, 25]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      ></mat-paginator>
+    }
+  }
+</mat-card>
